@@ -2,6 +2,13 @@
 
 from app.rag.chunking import Chunk, RecursiveCharacterTextSplitter
 from app.rag.embeddings import EmbeddingService
+from app.rag.generation import (
+    ChatMessage,
+    GenerationRequest,
+    GenerationResponse,
+    LLMProvider,
+    create_llm_provider,
+)
 from app.rag.ingestion import (
     Document,
     DocumentLoader,
@@ -21,6 +28,7 @@ from app.rag.vectorstore import MetadataFilter, QdrantRepository, VectorRecord
 __all__ = [
     "BM25Searcher",
     "BuiltPrompt",
+    "ChatMessage",
     "Chunk",
     "ContextChunk",
     "CrossEncoderReranker",
@@ -28,10 +36,13 @@ __all__ = [
     "Document",
     "DocumentLoader",
     "EmbeddingService",
+    "GenerationRequest",
+    "GenerationResponse",
     "HybridRetriever",
     "HybridSearchResult",
     "LexicalDocument",
     "LexicalSearchResult",
+    "LLMProvider",
     "MarkdownLoader",
     "MetadataFilter",
     "PDFLoader",
@@ -42,6 +53,7 @@ __all__ = [
     "RerankResult",
     "TextLoader",
     "VectorRecord",
+    "create_llm_provider",
     "get_loader",
     "load_document",
 ]

@@ -9,6 +9,7 @@ packages = [{ include = "app" }]
 [tool.poetry.dependencies]
 python = "^3.12"
 fastapi = "^0.115.0"
+httpx = "^0.28.0"
 uvicorn = { extras = ["standard"], version = "^0.32.0" }
 pydantic-settings = "^2.6.0"
 structlog = "^24.4.0"
@@ -79,7 +80,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*", "tiktoken.*"]
+module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*", "tiktoken.*", "httpx.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

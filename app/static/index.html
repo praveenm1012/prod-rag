@@ -47,7 +47,21 @@
               <input id="upload-file" name="file" type="file" accept=".pdf,.txt,.md,.docx" />
               <span id="upload-label">Choose PDF, TXT, Markdown, or DOCX</span>
             </label>
-            <button class="btn btn-primary" type="submit">Upload &amp; Index</button>
+            <p id="upload-hint" class="upload-hint">
+              Large files are processed in the background. Embedding on CPU can take several
+              minutes for multi-megabyte PDFs.
+            </p>
+            <div id="upload-progress" class="upload-progress" hidden>
+              <div class="upload-progress-header">
+                <strong id="upload-progress-title">Processing upload…</strong>
+                <span id="upload-progress-elapsed">0s</span>
+              </div>
+              <div class="bar"><span id="upload-progress-bar"></span></div>
+              <div id="upload-progress-detail" class="upload-progress-detail"></div>
+            </div>
+            <button class="btn btn-primary" type="submit" id="upload-submit-btn">
+              Upload &amp; Index
+            </button>
           </form>
           <pre class="json-preview" id="upload-result">No upload yet.</pre>
         </section>

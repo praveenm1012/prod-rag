@@ -319,6 +319,58 @@ textarea {
   font-size: 0.85rem;
 }
 
+.upload-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.upload-progress {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(4, 10, 20, 0.45);
+}
+
+.upload-progress-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.upload-progress-detail {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.document-status {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.document-status.processing {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--warning);
+}
+
+.document-status.indexed {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--success);
+}
+
+.document-status.failed {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--danger);
+}
+
 .citations {
   display: flex;
   flex-wrap: wrap;

@@ -38,6 +38,10 @@ class DocumentResponse(BaseModel):
     source: str
     chunk_count: int
     uploaded_at: datetime
+    status: Literal["processing", "indexed", "failed"] = "indexed"
+    phase: str | None = None
+    error_message: str | None = None
+    file_size_bytes: int = 0
 
 
 class DocumentListResponse(BaseModel):
@@ -48,6 +52,23 @@ class DocumentListResponse(BaseModel):
 class UploadResponse(BaseModel):
     document: DocumentResponse
     chunks_indexed: int
+
+
+class UploadAcceptedResponse(BaseModel):
+    document: DocumentResponse
+    status: Literal["processing"] = "processing"
+    message: str
+
+
+class UploadStatusResponse(BaseModel):
+    document_id: str
+    filename: str
+    status: Literal["processing", "indexed", "failed"]
+    phase: str | None = None
+    chunk_count: int
+    file_size_bytes: int
+    error_message: str | None = None
+    uploaded_at: datetime
 
 
 class DeleteRequest(BaseModel):

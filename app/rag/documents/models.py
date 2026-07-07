@@ -2,6 +2,16 @@
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Literal
+
+DocumentStatus = Literal["processing", "indexed", "failed"]
+ProcessingPhase = Literal[
+    "queued",
+    "ingesting",
+    "chunking",
+    "embedding",
+    "indexing",
+]
 
 
 @dataclass(frozen=True)
@@ -13,6 +23,10 @@ class DocumentRecord:
     source: str
     chunk_count: int
     uploaded_at: datetime
+    status: DocumentStatus = "indexed"
+    phase: ProcessingPhase | None = None
+    error_message: str | None = None
+    file_size_bytes: int = 0
 
 
 @dataclass(frozen=True)

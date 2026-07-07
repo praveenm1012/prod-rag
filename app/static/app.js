@@ -8,6 +8,12 @@ const uploadForm = document.querySelector("#upload-form");
 const uploadFile = document.querySelector("#upload-file");
 const uploadLabel = document.querySelector("#upload-label");
 const uploadResult = document.querySelector("#upload-result");
+const uploadProgress = document.querySelector("#upload-progress");
+const uploadProgressTitle = document.querySelector("#upload-progress-title");
+const uploadProgressElapsed = document.querySelector("#upload-progress-elapsed");
+const uploadProgressBar = document.querySelector("#upload-progress-bar");
+const uploadProgressDetail = document.querySelector("#upload-progress-detail");
+const uploadSubmitBtn = document.querySelector("#upload-submit-btn");
 const documentsList = document.querySelector("#documents-list");
 const documentsEmpty = document.querySelector("#documents-empty");
 const refreshDocumentsBtn = document.querySelector("#refresh-documents-btn");
@@ -99,6 +105,76 @@ async function refreshStatus() {
   await Promise.all([refreshHealth(), refreshProviderStatus()]);
 }
 
+function formatFileSize(bytes) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatPhase(phase) {
+  const labels = {
+    queued: "Queued",
+    ingesting: "Reading file",
+    chunking: "Splitting into chunks",
+    embedding: "Generating embeddings (slowest step on CPU)",
+    indexing: "Building search index",
+  };
+  return labels[phase] || phase || "Processing";
+}
+
+function setUploadProgress(visible, title = "", detail = "", percent = 8) {
+  uploadProgress.hidden = !visible;
+  uploadProgressTitle.textContent = title;
+  uploadProgressDetail.textContent = detail;
+  uploadProgressBar.style.width = `${percent}%`;
+}
+
+async function pollUploadStatus(documentId, startedAt) {
+  const pollIntervalMs = 2000;
+  const maxAttempts = 900;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+    uploadProgressElapsed.textContent = `${elapsedSeconds}s`;
+
+    const { response, body } = await fetchJson(`/upload/${documentId}/status`);
+    if (!response.ok) {
+      throw new Error(body?.detail || "Failed to fetch upload status");
+    }
+
+    const phasePercent = {
+      queued: 12,
+      ingesting: 24,
+      chunking: 38,
+      embedding: 72,
+      indexing: 92,
+    };
+    const percent = body.status === "indexed" ? 100 : phasePercent[body.phase] || 15;
+    setUploadProgress(
+      true,
+      body.status === "indexed" ? "Indexing complete" : "Processing upload…",
+      `${formatPhase(body.phase)} · ${body.chunk_count} chunks · ${formatFileSize(body.file_size_bytes)}`,
+      percent,
+    );
+
+    if (body.status === "indexed") {
+      return body;
+    }
+    if (body.status === "failed") {
+      throw new Error(body.error_message || "Upload failed during background processing");
+    }
+
+    await refreshDocuments();
+    await new Promise((resolve) => window.setTimeout(resolve, pollIntervalMs));
+  }
+
+  throw new Error("Upload is still processing. Check the documents list and try again later.");
+}
+
 function renderDocuments(payload) {
   documentsList.innerHTML = "";
   const documents = payload?.documents || [];
@@ -106,18 +182,36 @@ function renderDocuments(payload) {
 
   for (const document of documents) {
     const row = documentRowTemplate.content.firstElementChild.cloneNode(true);
-    row.querySelector(".document-name").textContent = document.filename;
+    const statusClass = document.status || "indexed";
+    row.querySelector(".document-name").innerHTML =
+      `${escapeHtml(document.filename)}` +
+      `<span class="document-status ${statusClass}">${statusClass}</span>`;
+    const phaseSuffix = document.phase ? ` · ${formatPhase(document.phase)}` : "";
     row.querySelector(".document-meta").textContent =
-      `${document.chunk_count} chunks · ${document.document_id}`;
-    row.querySelector(".ask-btn").addEventListener("click", () => {
+      `${document.chunk_count} chunks · ${formatFileSize(document.file_size_bytes || 0)}` +
+      `${phaseSuffix} · ${document.document_id}`;
+    const deleteButton = row.querySelector(".delete-btn");
+    const askButton = row.querySelector(".ask-btn");
+    if (document.status === "processing") {
+      deleteButton.textContent = "Cancel";
+      askButton.disabled = true;
+    }
+    askButton.addEventListener("click", () => {
       chatQuestion.value = `Tell me about ${document.filename}`;
       chatQuestion.focus();
     });
-    row.querySelector(".delete-btn").addEventListener("click", async () => {
+    deleteButton.addEventListener("click", async () => {
       await deleteDocument(document.document_id, document.filename);
     });
     documentsList.appendChild(row);
   }
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 async function refreshDocuments() {
@@ -153,7 +247,12 @@ async function deleteDocument(documentId, filename) {
 }
 
 uploadFile.addEventListener("change", () => {
-  uploadLabel.textContent = uploadFile.files[0]?.name || "Choose PDF, TXT, Markdown, or DOCX";
+  const file = uploadFile.files[0];
+  if (!file) {
+    uploadLabel.textContent = "Choose PDF, TXT, Markdown, or DOCX";
+    return;
+  }
+  uploadLabel.textContent = `${file.name} (${formatFileSize(file.size)})`;
 });
 
 uploadForm.addEventListener("submit", async (event) => {
@@ -166,24 +265,48 @@ uploadForm.addEventListener("submit", async (event) => {
 
   const formData = new FormData();
   formData.append("file", file);
-  uploadResult.textContent = "Uploading and indexing…";
+  uploadResult.textContent = "Upload accepted. Processing in background…";
+  uploadSubmitBtn.disabled = true;
+  const startedAt = Date.now();
+  setUploadProgress(
+    true,
+    "Uploading file…",
+    `${file.name} · ${formatFileSize(file.size)}`,
+    5,
+  );
 
   try {
-    const response = await fetch(`${API_BASE}/upload`, {
+    const response = await fetch(`${API_BASE}/upload?background=true`, {
       method: "POST",
       body: formData,
     });
     const body = await response.json();
-    logRequest("POST", "/upload", response.status, file.name);
+    logRequest("POST", "/upload?background=true", response.status, file.name);
     uploadResult.textContent = prettyJson(body);
-    if (!response.ok) {
-      throw new Error(body.detail || "Upload failed");
+    if (response.status !== 202) {
+      throw new Error(body.detail || `Upload failed with status ${response.status}`);
     }
+
+    const documentId = body.document.document_id;
+    const finalStatus = await pollUploadStatus(documentId, startedAt);
+    uploadResult.textContent = prettyJson({
+      ...body,
+      final_status: finalStatus,
+    });
     uploadFile.value = "";
     uploadLabel.textContent = "Choose PDF, TXT, Markdown, or DOCX";
+    setUploadProgress(
+      true,
+      "Indexing complete",
+      `${finalStatus.chunk_count} chunks indexed`,
+      100,
+    );
     await refreshDocuments();
   } catch (error) {
     uploadResult.textContent = String(error);
+    setUploadProgress(true, "Upload failed", String(error), 100);
+  } finally {
+    uploadSubmitBtn.disabled = false;
   }
 });
 

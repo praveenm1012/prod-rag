@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>prod-rag API Test Console</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <div>
+          <p class="eyebrow">prod-rag</p>
+          <h1>API Test Console</h1>
+          <p class="subtitle">
+            Upload documents, run RAG chat, and inspect API responses.
+          </p>
+        </div>
+        <div class="header-actions">
+          <button id="refresh-status-btn" class="btn btn-secondary" type="button">
+            Refresh Status
+          </button>
+        </div>
+      </header>
+
+      <section class="status-grid" id="status-grid">
+        <article class="panel status-card" id="health-card">
+          <h2>Health</h2>
+          <div class="status-value" data-state="loading">Checking…</div>
+          <pre class="json-preview" id="health-json">{}</pre>
+        </article>
+        <article class="panel status-card" id="provider-card">
+          <h2>LLM Provider</h2>
+          <div class="status-value" data-state="loading">Checking…</div>
+          <pre class="json-preview" id="provider-json">{}</pre>
+        </article>
+      </section>
+
+      <main class="layout">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Upload Document</h2>
+            <span class="badge">POST /api/v1/upload</span>
+          </div>
+          <form id="upload-form" class="stack">
+            <label class="file-drop" for="upload-file">
+              <input id="upload-file" name="file" type="file" accept=".pdf,.txt,.md,.docx" />
+              <span id="upload-label">Choose PDF, TXT, Markdown, or DOCX</span>
+            </label>
+            <button class="btn btn-primary" type="submit">Upload &amp; Index</button>
+          </form>
+          <pre class="json-preview" id="upload-result">No upload yet.</pre>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Documents</h2>
+            <span class="badge">GET /api/v1/documents</span>
+          </div>
+          <div class="toolbar">
+            <button id="refresh-documents-btn" class="btn btn-secondary" type="button">
+              Refresh List
+            </button>
+          </div>
+          <div id="documents-empty" class="empty-state">No documents uploaded yet.</div>
+          <div id="documents-list" class="documents-list"></div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-header">
+            <h2>Chat</h2>
+            <span class="badge" id="chat-endpoint-badge">POST /api/v1/chat</span>
+          </div>
+          <form id="chat-form" class="stack">
+            <label class="field">
+              <span>Question</span>
+              <textarea
+                id="chat-question"
+                rows="4"
+                placeholder="Ask a question about your uploaded documents…"
+                required
+              ></textarea>
+            </label>
+            <div class="options-row">
+              <label class="checkbox">
+                <input id="chat-use-rag" type="checkbox" checked />
+                <span>Use RAG</span>
+              </label>
+              <label class="checkbox">
+                <input id="chat-stream" type="checkbox" />
+                <span>Stream response</span>
+              </label>
+              <label class="field field-inline">
+                <span>top_k</span>
+                <input id="chat-top-k" type="number" min="1" max="50" value="3" />
+              </label>
+            </div>
+            <button class="btn btn-primary" type="submit" id="chat-submit-btn">
+              Send
+            </button>
+          </form>
+          <div class="answer-block">
+            <div class="answer-header">
+              <h3>Answer</h3>
+              <div id="chat-meta" class="meta-line"></div>
+            </div>
+            <div id="chat-answer" class="answer-text">No response yet.</div>
+            <div id="chat-citations" class="citations"></div>
+          </div>
+          <pre class="json-preview" id="chat-result">{}</pre>
+        </section>
+      </main>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2>Request Log</h2>
+          <button id="clear-log-btn" class="btn btn-secondary" type="button">Clear</button>
+        </div>
+        <div id="request-log" class="request-log"></div>
+      </section>
+    </div>
+
+    <template id="document-row-template">
+      <article class="document-row">
+        <div class="document-main">
+          <strong class="document-name"></strong>
+          <span class="document-meta"></span>
+        </div>
+        <div class="document-actions">
+          <button class="btn btn-secondary btn-small ask-btn" type="button">Ask about this</button>
+          <button class="btn btn-danger btn-small delete-btn" type="button">Delete</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="/static/app.js" type="module"></script>
+  </body>
+</html>

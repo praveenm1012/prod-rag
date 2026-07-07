@@ -2,14 +2,19 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app import __version__
 from app.api.router import api_router
+from app.api.ui import router as ui_router
 from app.core.config import get_settings
 from app.core.logging import get_logger, setup_logging
+
+_STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -38,7 +43,13 @@ def create_app() -> FastAPI:
         debug=settings.app_debug,
         lifespan=lifespan,
     )
+    application.include_router(ui_router)
     application.include_router(api_router)
+    application.mount(
+        "/static",
+        StaticFiles(directory=_STATIC_DIR),
+        name="static",
+    )
     return application
 
 

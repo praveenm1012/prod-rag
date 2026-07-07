@@ -13,6 +13,7 @@ from app.rag.ingestion import (
     load_document,
 )
 from app.rag.lexical import BM25Searcher, LexicalDocument, LexicalSearchResult
+from app.rag.retrieval import HybridRetriever, HybridSearchResult
 from app.rag.vectorstore import MetadataFilter, QdrantRepository, VectorRecord
 
 __all__ = [
@@ -22,6 +23,8 @@ __all__ = [
     "Document",
     "DocumentLoader",
     "EmbeddingService",
+    "HybridRetriever",
+    "HybridSearchResult",
     "LexicalDocument",
     "LexicalSearchResult",
     "MarkdownLoader",

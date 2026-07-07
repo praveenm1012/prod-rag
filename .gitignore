@@ -39,6 +39,7 @@ htmlcov/
 
 # Caches
 .cache/
+reports/
 
 # IDE
 .idea/

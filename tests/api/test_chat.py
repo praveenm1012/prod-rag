@@ -1,24 +1,11 @@
 """Chat API tests."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
 
-from app.api import chat as chat_module
-from app.main import create_app
-from app.rag.generation.models import GenerationResponse, StreamChunk
 
-
-@pytest.fixture(autouse=True)
-def reset_pipeline() -> None:
-    chat_module._pipeline = None
-    yield
-    chat_module._pipeline = None
-
-
-def test_provider_status() -> None:
-    client = TestClient(create_app())
+def test_provider_status(client: TestClient) -> None:
     response = client.get("/api/v1/chat/status")
     assert response.status_code == 200
     body = response.json()
@@ -27,19 +14,7 @@ def test_provider_status() -> None:
     assert "configured" in body
 
 
-@patch("app.api.chat.create_llm_provider")
-def test_chat_endpoint(mock_create_provider: MagicMock) -> None:
-    mock_provider = MagicMock()
-    mock_provider.complete.return_value = GenerationResponse(
-        content="Hello from the LLM.",
-        model="gpt-4o-mini",
-        provider="openai",
-        finish_reason="stop",
-        usage={"total_tokens": 10},
-    )
-    mock_create_provider.return_value = mock_provider
-
-    client = TestClient(create_app())
+def test_chat_endpoint(client: TestClient) -> None:
     response = client.post(
         "/api/v1/chat",
         json={"question": "Say hello"},
@@ -47,26 +22,53 @@ def test_chat_endpoint(mock_create_provider: MagicMock) -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["answer"] == "Hello from the LLM."
+    assert body["answer"] == "Test answer from LLM."
     assert body["provider"] == "openai"
-    assert body["model"] == "gpt-4o-mini"
+    assert body["model"] == "test-model"
 
 
-@patch("app.api.chat.create_llm_provider")
-def test_chat_stream_endpoint(mock_create_provider: MagicMock) -> None:
-    mock_provider = MagicMock()
-    mock_provider.stream.return_value = [
-        StreamChunk(content="Hel"),
-        StreamChunk(content="lo"),
-        StreamChunk(content="", is_final=True, finish_reason="stop"),
-    ]
-    mock_create_provider.return_value = mock_provider
-
-    client = TestClient(create_app())
+def test_chat_stream_endpoint(client: TestClient) -> None:
     response = client.post(
         "/api/v1/chat/stream",
         json={"question": "Say hello"},
     )
 
     assert response.status_code == 200
-    assert response.text == "Hello"
+    assert response.text == "Test answer."
+
+
+def test_chat_with_rag_after_upload(client: TestClient) -> None:
+    upload = client.post(
+        "/api/v1/upload",
+        files={
+            "file": ("notes.txt", b"Python is a programming language.", "text/plain")
+        },
+    )
+    assert upload.status_code == 201
+
+    response = client.post(
+        "/api/v1/chat",
+        json={"question": "What is Python?", "use_rag": True, "top_k": 3},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["answer"] == "Test answer from LLM."
+    assert isinstance(body["citations"], list)
+
+
+@patch("app.api.chat._provider_configured", return_value=False)
+def test_chat_returns_503_when_provider_not_configured(
+    _mock_configured,
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/v1/chat",
+        json={"question": "hello"},
+    )
+    assert response.status_code == 503
+    assert response.json()["detail"] == "LLM provider is not configured"
+
+
+def test_chat_validation_error(client: TestClient) -> None:
+    response = client.post("/api/v1/chat", json={"question": ""})
+    assert response.status_code == 422

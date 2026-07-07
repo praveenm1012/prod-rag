@@ -18,10 +18,8 @@ def test_delete_document(client: TestClient) -> None:
         "/api/v1/delete",
         json={"document_id": document_id},
     )
-    assert response.status_code == 200
-    body = response.json()
-    assert body["document_id"] == document_id
-    assert body["deleted"] is True
+    assert response.status_code == 204
+    assert response.content == b""
 
     listing = client.get("/api/v1/documents")
     assert listing.json()["total"] == 0

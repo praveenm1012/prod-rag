@@ -20,6 +20,7 @@ tenacity = "^9.0.0"
 diskcache = "^5.6.3"
 tqdm = "^4.67.0"
 numpy = "^2.1.0"
+qdrant-client = "^1.12.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"
@@ -30,6 +31,7 @@ black = "^24.10.0"
 mypy = "^1.13.0"
 pre-commit = "^4.0.0"
 matplotlib = "^3.9.0"
+testcontainers = "^4.9.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -75,7 +77,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["diskcache.*", "tqdm.*"]
+module = ["diskcache.*", "tqdm.*", "qdrant_client.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -84,4 +86,5 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: integration tests that require model downloads or GPU",
+    "docker: tests that require Docker",
 ]

@@ -12,6 +12,7 @@ from app.rag.ingestion import (
     get_loader,
     load_document,
 )
+from app.rag.vectorstore import MetadataFilter, QdrantRepository, VectorRecord
 
 __all__ = [
     "Chunk",
@@ -20,9 +21,12 @@ __all__ = [
     "DocumentLoader",
     "EmbeddingService",
     "MarkdownLoader",
+    "MetadataFilter",
     "PDFLoader",
+    "QdrantRepository",
     "RecursiveCharacterTextSplitter",
     "TextLoader",
+    "VectorRecord",
     "get_loader",
     "load_document",
 ]

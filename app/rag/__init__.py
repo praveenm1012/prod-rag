@@ -12,14 +12,18 @@ from app.rag.ingestion import (
     get_loader,
     load_document,
 )
+from app.rag.lexical import BM25Searcher, LexicalDocument, LexicalSearchResult
 from app.rag.vectorstore import MetadataFilter, QdrantRepository, VectorRecord
 
 __all__ = [
+    "BM25Searcher",
     "Chunk",
     "DocxLoader",
     "Document",
     "DocumentLoader",
     "EmbeddingService",
+    "LexicalDocument",
+    "LexicalSearchResult",
     "MarkdownLoader",
     "MetadataFilter",
     "PDFLoader",

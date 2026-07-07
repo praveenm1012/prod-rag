@@ -2506,6 +2506,23 @@ fastembed = ["fastembed (>=0.8,<0.9)"]
 fastembed-gpu = ["fastembed-gpu (>=0.8,<0.9)"]
 
 [[package]]
+name = "rank-bm25"
+version = "0.2.2"
+description = "Various BM25 algorithms for document ranking"
+optional = false
+python-versions = "*"
+files = [
+    {file = "rank_bm25-0.2.2-py3-none-any.whl", hash = "sha256:7bd4a95571adadfc271746fa146a4bcfd89c0cf731e49c3d1ad863290adbe8ae"},
+    {file = "rank_bm25-0.2.2.tar.gz", hash = "sha256:096ccef76f8188563419aaf384a02f0ea459503fdf77901378d4fd9d87e5e51d"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+dev = ["pytest"]
+
+[[package]]
 name = "regex"
 version = "2026.6.28"
 description = "Alternative regular expression module, to replace re."
@@ -3680,4 +3697,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "a1c14a691a70bd612e5a4fa843a349e7214f65ddf4fdce248837ebc87a86c938"
+content-hash = "18fd69e1e0d87ddfbe7fafc8de70cea3731843dd1e11d1b217d6caf4003ffc6c"

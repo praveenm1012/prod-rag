@@ -22,7 +22,8 @@ class PDFLoader(DocumentLoader):
         try:
             reader = PdfReader(str(path))
             pages = [page.extract_text() or "" for page in reader.pages]
-            text = "\n".join(page.strip() for page in pages if page.strip())
+            page_texts = [page.strip() for page in pages]
+            text = "\n".join(page for page in page_texts if page)
         except PdfReadError as exc:
             raise DocumentLoadError(f"Failed to read PDF: {path}") from exc
         except OSError as exc:
@@ -34,5 +35,6 @@ class PDFLoader(DocumentLoader):
                 path,
                 format="pdf",
                 page_count=len(reader.pages),
+                page_texts=page_texts,
             ),
         )

@@ -22,6 +22,7 @@ tqdm = "^4.67.0"
 numpy = "^2.1.0"
 qdrant-client = "^1.12.0"
 rank-bm25 = "^0.2.2"
+tiktoken = "^0.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"
@@ -78,7 +79,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*"]
+module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*", "tiktoken.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

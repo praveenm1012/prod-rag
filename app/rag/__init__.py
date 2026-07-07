@@ -13,13 +13,16 @@ from app.rag.ingestion import (
     load_document,
 )
 from app.rag.lexical import BM25Searcher, LexicalDocument, LexicalSearchResult
+from app.rag.prompts import BuiltPrompt, ContextChunk, PromptBuilder
 from app.rag.reranking import CrossEncoderReranker, RerankCandidate, RerankResult
 from app.rag.retrieval import HybridRetriever, HybridSearchResult
 from app.rag.vectorstore import MetadataFilter, QdrantRepository, VectorRecord
 
 __all__ = [
     "BM25Searcher",
+    "BuiltPrompt",
     "Chunk",
+    "ContextChunk",
     "CrossEncoderReranker",
     "DocxLoader",
     "Document",
@@ -32,6 +35,7 @@ __all__ = [
     "MarkdownLoader",
     "MetadataFilter",
     "PDFLoader",
+    "PromptBuilder",
     "QdrantRepository",
     "RecursiveCharacterTextSplitter",
     "RerankCandidate",

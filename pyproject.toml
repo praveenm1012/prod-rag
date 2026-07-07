@@ -36,6 +36,9 @@ mypy = "^1.13.0"
 pre-commit = "^4.0.0"
 matplotlib = "^3.9.0"
 testcontainers = "^4.9.0"
+ragas = "^0.4.3"
+datasets = "^5.0.0"
+langchain-community = "0.3.27"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -81,7 +84,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*", "tiktoken.*", "httpx.*"]
+module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*", "tiktoken.*", "httpx.*", "ragas.*", "langchain_openai.*", "langchain_community.*", "datasets.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

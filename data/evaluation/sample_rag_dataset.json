@@ -1,0 +1,60 @@
+{
+  "name": "acme-rag-sample-eval",
+  "description": "Sample evaluation dataset for the Acme Corporation RAG knowledge base.",
+  "samples": [
+    {
+      "id": "acme-hq",
+      "question": "Where is the headquarters of Acme Corporation?",
+      "reference": "Acme Corporation is headquartered in Springfield.",
+      "response": "Acme Corporation is headquartered in Springfield [1].",
+      "contexts": [
+        "The headquarters of Acme Corporation is located in Springfield.",
+        "Acme specializes in retrieval-augmented generation testing."
+      ],
+      "expected_citations": ["[1]"]
+    },
+    {
+      "id": "acme-focus",
+      "question": "What does Acme Corporation specialize in?",
+      "reference": "Acme specializes in retrieval-augmented generation testing.",
+      "response": "Acme specializes in retrieval-augmented generation testing [1].",
+      "contexts": [
+        "Acme specializes in retrieval-augmented generation testing.",
+        "The headquarters of Acme Corporation is located in Springfield."
+      ],
+      "expected_citations": ["[1]"]
+    },
+    {
+      "id": "acme-doc-title",
+      "question": "What is the title of the Acme smoke test document?",
+      "reference": "The document is titled Acme Corporation Smoke Test Document.",
+      "response": "The smoke test document is titled Acme Corporation Smoke Test Document [1].",
+      "contexts": [
+        "Acme Corporation Smoke Test Document.",
+        "The headquarters of Acme Corporation is located in Springfield."
+      ],
+      "expected_citations": ["[1]"]
+    },
+    {
+      "id": "acme-missing-citation",
+      "question": "In which city is Acme Corporation based?",
+      "reference": "Acme Corporation is based in Springfield.",
+      "response": "Acme Corporation is based in Springfield.",
+      "contexts": [
+        "The headquarters of Acme Corporation is located in Springfield."
+      ],
+      "expected_citations": ["[1]"]
+    },
+    {
+      "id": "acme-noise-context",
+      "question": "Where is Acme headquartered?",
+      "reference": "Acme Corporation is headquartered in Springfield.",
+      "response": "Acme Corporation is headquartered in Springfield [1].",
+      "contexts": [
+        "Berlin is the capital of Germany and a major European city.",
+        "The headquarters of Acme Corporation is located in Springfield."
+      ],
+      "expected_citations": ["[1]"]
+    }
+  ]
+}

@@ -78,7 +78,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*"]
+module = ["diskcache.*", "tqdm.*", "qdrant_client.*", "rank_bm25.*", "sentence_transformers.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

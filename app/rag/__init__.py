@@ -1,6 +1,7 @@
 """RAG pipeline components."""
 
 from app.rag.chunking import Chunk, RecursiveCharacterTextSplitter
+from app.rag.embeddings import EmbeddingService
 from app.rag.ingestion import (
     Document,
     DocumentLoader,
@@ -17,6 +18,7 @@ __all__ = [
     "DocxLoader",
     "Document",
     "DocumentLoader",
+    "EmbeddingService",
     "MarkdownLoader",
     "PDFLoader",
     "RecursiveCharacterTextSplitter",

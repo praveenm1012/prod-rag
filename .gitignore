@@ -37,6 +37,9 @@ htmlcov/
 .env
 .env.local
 
+# Caches
+.cache/
+
 # IDE
 .idea/
 .vscode/

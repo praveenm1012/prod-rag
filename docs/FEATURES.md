@@ -21,10 +21,11 @@ Complete list of features built in **prod-rag**, what each one does, and how to 
 13. [RAG pipeline](#rag-pipeline)
 14. [Document management](#document-management)
 15. [Ragas evaluation](#ragas-evaluation)
-16. [Scripts and CLI tools](#scripts-and-cli-tools)
-17. [Testing](#testing)
-18. [Configuration reference](#configuration-reference)
-19. [Docker and development](#docker-and-development)
+16. [Observability](#observability)
+17. [Scripts and CLI tools](#scripts-and-cli-tools)
+18. [Testing](#testing)
+19. [Configuration reference](#configuration-reference)
+20. [Docker and development](#docker-and-development)
 
 ---
 
@@ -456,6 +457,65 @@ poetry run python scripts/run_ragas_evaluation.py \
 
 ---
 
+## Observability
+
+**Location:** `app/observability/`
+
+Tracing, metrics, cost tracking, and evaluation hooks with pluggable backends.
+
+| Module | Purpose |
+|--------|---------|
+| `tracing.py` | `Tracer` / `SpanContext` interfaces, `span()` helper, backends (`memory`, `langfuse`, `none`) |
+| `metrics.py` | Request counters and latency histograms |
+| `costs.py` | LLM token usage and estimated USD cost |
+| `evaluation.py` | RAG evaluation score recording |
+| `middleware.py` | HTTP request tracing for all API routes |
+
+### Automatic traces
+
+| Span | When |
+|------|------|
+| `application.startup` | App lifespan startup |
+| `application.shutdown` | App lifespan shutdown |
+| `http get /api/v1/health` | Health check requests |
+| `rag.pipeline.ask` | Full RAG pipeline (with child spans for retrieve, rerank, prompt, generate) |
+| `rag.chat` | Direct LLM chat without retrieval |
+| `llm.generation.cost` | Token usage and cost recorded per generation |
+
+### Backends
+
+| Backend | Use |
+|---------|-----|
+| `memory` (default) | In-process trace capture for dev/tests |
+| `langfuse` | Export traces to [Langfuse](https://langfuse.com) Cloud or self-hosted |
+| `none` | Disable tracing |
+
+### Verify traces
+
+```bash
+# In-memory backend (default)
+poetry run python scripts/verify_observability.py
+
+# Langfuse backend
+export OBSERVABILITY_BACKEND=langfuse
+export LANGFUSE_PUBLIC_KEY=pk-lf-...
+export LANGFUSE_SECRET_KEY=sk-lf-...
+poetry run python scripts/verify_observability.py --backend langfuse
+```
+
+### Configuration
+
+| Variable | Default | Use |
+|----------|---------|-----|
+| `OBSERVABILITY_ENABLED` | `true` | Master switch |
+| `OBSERVABILITY_BACKEND` | `memory` | `memory`, `langfuse`, or `none` |
+| `OBSERVABILITY_SERVICE_NAME` | `prod-rag` | Service name in trace metadata |
+| `LANGFUSE_PUBLIC_KEY` | — | Langfuse public key |
+| `LANGFUSE_SECRET_KEY` | — | Langfuse secret key |
+| `LANGFUSE_BASE_URL` | `https://cloud.langfuse.com` | Langfuse API base URL |
+
+---
+
 ## Scripts and CLI tools
 
 | Script | Purpose | Usage |
@@ -466,6 +526,7 @@ poetry run python scripts/run_ragas_evaluation.py \
 | `scripts/test_api_smoke.py` | Live API smoke (upload → chat → delete) | `poetry run python scripts/test_api_smoke.py` |
 | `scripts/e2e_smoke_test.py` | End-to-end PDF workflow with timing metrics | `poetry run python scripts/e2e_smoke_test.py --mode api` |
 | `scripts/run_ragas_evaluation.py` | Ragas eval + HTML report | `poetry run python scripts/run_ragas_evaluation.py` |
+| `scripts/verify_observability.py` | Verify startup and health traces | `poetry run python scripts/verify_observability.py` |
 | `scripts/benchmark_embeddings.py` | Embedding throughput benchmark | `poetry run python scripts/benchmark_embeddings.py` |
 | `scripts/benchmark_lexical_search.py` | BM25 search benchmark | `poetry run python scripts/benchmark_lexical_search.py` |
 | `scripts/benchmark_hybrid_retrieval.py` | Hybrid vs BM25 vs vector benchmark | `poetry run python scripts/benchmark_hybrid_retrieval.py` |
@@ -512,6 +573,7 @@ poetry run pytest -v
 | Prompts | `tests/rag/prompts/` | Prompt builder and truncation |
 | Generation | `tests/rag/generation/` | OpenAI, Claude, Ollama providers |
 | Evaluation | `tests/rag/evaluation/` | Citation accuracy, dataset, HTML report |
+| Observability | `tests/observability/` | Tracing, costs, evaluation hooks |
 | Qdrant | `tests/rag/vectorstore/` | Docker integration (gated) |
 
 **Optional integration flags:**
@@ -539,6 +601,17 @@ Copy `.env.example` to `.env` and set values as needed.
 | `APP_PORT` | `8000` | Bind port |
 | `LOG_LEVEL` | `INFO` | Logging verbosity |
 | `LOG_JSON` | `false` | JSON log output (production) |
+
+### Observability
+
+| Variable | Default | Use |
+|----------|---------|-----|
+| `OBSERVABILITY_ENABLED` | `true` | Enable tracing and metrics |
+| `OBSERVABILITY_BACKEND` | `memory` | `memory`, `langfuse`, or `none` |
+| `OBSERVABILITY_SERVICE_NAME` | `prod-rag` | Service name in trace metadata |
+| `LANGFUSE_PUBLIC_KEY` | — | Langfuse public API key |
+| `LANGFUSE_SECRET_KEY` | — | Langfuse secret API key |
+| `LANGFUSE_BASE_URL` | `https://cloud.langfuse.com` | Langfuse host |
 
 ### Embeddings
 

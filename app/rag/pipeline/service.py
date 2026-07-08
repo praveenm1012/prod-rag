@@ -7,6 +7,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.logging import get_logger
+from app.observability.costs import get_cost_tracker
+from app.observability.init import get_tracer
+from app.observability.tracing import span
 from app.rag.generation import (
     ChatMessage,
     GenerationRequest,
@@ -74,25 +77,70 @@ class RagPipeline:
         top_k: int | None = None,
     ) -> RagAnswer:
         """Run the full RAG pipeline and return a completed answer."""
-        retrieval_results = self._retrieve(question, top_k=top_k)
-        rerank_results = self._rerank(question, retrieval_results)
-        prompt = self._prompt_builder.build(
-            question=question,
-            context=list(rerank_results),
-            history=history,
-            few_shot_examples=few_shot_examples,
-        )
-        generation = self._generate(prompt)
-        return RagAnswer(
-            question=question,
-            answer=generation.content,
-            prompt=prompt,
-            retrieval_results=tuple(retrieval_results),
-            rerank_results=tuple(rerank_results),
-            model=generation.model,
-            provider=generation.provider,
-            usage=generation.usage,
-        )
+        tracer = get_tracer()
+        with span(
+            tracer,
+            "rag.pipeline.ask",
+            attributes={"top_k": top_k},
+        ) as root_span:
+            root_span.set_input({"question": question, "top_k": top_k})
+
+            with span(tracer, "rag.retrieve") as retrieve_span:
+                retrieval_results = self._retrieve(question, top_k=top_k)
+                retrieve_span.set_output({"result_count": len(retrieval_results)})
+
+            with span(tracer, "rag.rerank") as rerank_span:
+                rerank_results = self._rerank(question, retrieval_results)
+                rerank_span.set_output({"result_count": len(rerank_results)})
+
+            with span(tracer, "rag.prompt.build") as prompt_span:
+                prompt = self._prompt_builder.build(
+                    question=question,
+                    context=list(rerank_results),
+                    history=history,
+                    few_shot_examples=few_shot_examples,
+                )
+                prompt_span.set_output(
+                    {
+                        "citation_count": len(prompt.citations),
+                        "token_count": prompt.token_count,
+                    }
+                )
+
+            with span(tracer, "rag.generate", kind="generation") as generate_span:
+                generation = self._generate(prompt)
+                generate_span.set_output(
+                    {
+                        "model": generation.model,
+                        "provider": generation.provider,
+                        "usage": generation.usage,
+                    }
+                )
+
+            if generation.usage:
+                get_cost_tracker().record_generation(
+                    model=generation.model,
+                    provider=generation.provider,
+                    usage=generation.usage,
+                )
+
+            answer = RagAnswer(
+                question=question,
+                answer=generation.content,
+                prompt=prompt,
+                retrieval_results=tuple(retrieval_results),
+                rerank_results=tuple(rerank_results),
+                model=generation.model,
+                provider=generation.provider,
+                usage=generation.usage,
+            )
+            root_span.set_output(
+                {
+                    "answer_length": len(answer.answer),
+                    "citation_count": len(answer.prompt.citations),
+                }
+            )
+            return answer
 
     def stream(
         self,
@@ -126,19 +174,36 @@ class RagPipeline:
         history: Sequence[ConversationTurn] | None = None,
     ) -> GenerationResponse:
         """Generate an answer without retrieval (direct LLM chat)."""
-        messages: list[ChatMessage] = [
-            ChatMessage(
-                role="system",
-                content="You are a helpful assistant.",
-            ),
-        ]
-        if history:
-            for turn in history:
-                messages.append(
-                    ChatMessage(role=turn.role, content=turn.content),
+        tracer = get_tracer()
+        with span(tracer, "rag.chat", kind="generation") as active_span:
+            active_span.set_input({"question": question})
+            messages: list[ChatMessage] = [
+                ChatMessage(
+                    role="system",
+                    content="You are a helpful assistant.",
+                ),
+            ]
+            if history:
+                for turn in history:
+                    messages.append(
+                        ChatMessage(role=turn.role, content=turn.content),
+                    )
+            messages.append(ChatMessage(role="user", content=question))
+            response = self._llm.complete(GenerationRequest(messages=tuple(messages)))
+            active_span.set_output(
+                {
+                    "model": response.model,
+                    "provider": response.provider,
+                    "usage": response.usage,
+                }
+            )
+            if response.usage:
+                get_cost_tracker().record_generation(
+                    model=response.model,
+                    provider=response.provider,
+                    usage=response.usage,
                 )
-        messages.append(ChatMessage(role="user", content=question))
-        return self._llm.complete(GenerationRequest(messages=tuple(messages)))
+            return response
 
     def _retrieve(
         self,

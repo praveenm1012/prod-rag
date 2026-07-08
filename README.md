@@ -4,6 +4,8 @@ Production-grade RAG (Retrieval-Augmented Generation) application scaffold built
 
 ## Features
 
+See **[docs/FEATURES.md](docs/FEATURES.md)** for the complete feature list, API reference, scripts, and usage guide.
+
 - **FastAPI** HTTP API with versioned routes
 - **Poetry** dependency and packaging management
 - **pydantic-settings** for typed configuration from environment variables

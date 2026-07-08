@@ -24,6 +24,33 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     log_json: bool = Field(default=False, alias="LOG_JSON")
 
+    observability_enabled: bool = Field(default=True, alias="OBSERVABILITY_ENABLED")
+    observability_backend: str = Field(
+        default="memory",
+        alias="OBSERVABILITY_BACKEND",
+        description="Tracing backend: memory, langfuse, or none",
+    )
+    observability_service_name: str = Field(
+        default="prod-rag",
+        alias="OBSERVABILITY_SERVICE_NAME",
+    )
+    langfuse_public_key: str | None = Field(
+        default=None,
+        alias="LANGFUSE_PUBLIC_KEY",
+    )
+    langfuse_secret_key: str | None = Field(
+        default=None,
+        alias="LANGFUSE_SECRET_KEY",
+    )
+    langfuse_base_url: str = Field(
+        default="https://cloud.langfuse.com",
+        alias="LANGFUSE_BASE_URL",
+    )
+    observability_flush_on_shutdown: bool = Field(
+        default=True,
+        alias="OBSERVABILITY_FLUSH_ON_SHUTDOWN",
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:

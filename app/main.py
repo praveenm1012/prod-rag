@@ -13,6 +13,8 @@ from app.api.router import api_router
 from app.api.ui import router as ui_router
 from app.core.config import get_settings
 from app.core.logging import get_logger, setup_logging
+from app.observability import setup_observability, shutdown_observability, span
+from app.observability.middleware import ObservabilityMiddleware
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -23,14 +25,41 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     setup_logging(settings)
     logger = get_logger(__name__)
-    logger.info(
-        "application_starting",
-        app_name=settings.app_name,
-        version=__version__,
-        environment=settings.app_env,
-    )
+
+    tracer = setup_observability(settings)
+
+    with span(
+        tracer,
+        "application.startup",
+        attributes={
+            "service": settings.observability_service_name,
+            "environment": settings.app_env,
+            "version": __version__,
+            "backend": tracer.backend_name,
+        },
+    ) as startup_span:
+        startup_span.set_input(
+            {
+                "app_name": settings.app_name,
+                "environment": settings.app_env,
+            }
+        )
+        logger.info(
+            "application_starting",
+            app_name=settings.app_name,
+            version=__version__,
+            environment=settings.app_env,
+            observability_backend=tracer.backend_name,
+        )
+        startup_span.set_output({"status": "ready"})
+
     yield
-    logger.info("application_stopping", app_name=settings.app_name)
+
+    with span(tracer, "application.shutdown"):
+        logger.info("application_stopping", app_name=settings.app_name)
+
+    if settings.observability_flush_on_shutdown:
+        shutdown_observability()
 
 
 def create_app() -> FastAPI:
@@ -43,6 +72,8 @@ def create_app() -> FastAPI:
         debug=settings.app_debug,
         lifespan=lifespan,
     )
+    if settings.observability_enabled:
+        application.add_middleware(ObservabilityMiddleware)
     application.include_router(ui_router)
     application.include_router(api_router)
     application.mount(

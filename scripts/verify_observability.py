@@ -77,20 +77,23 @@ def main() -> int:
             print(json.dumps(payload, indent=2))
             return 0
 
-    from app.observability.init import get_tracer
+        from app.observability.init import get_tracer
+        from app.observability.tracing import LangfuseTracer
 
-    tracer = get_tracer()
-    tracer.flush()
-    print(
-        json.dumps(
-            {
-                "backend": tracer.backend_name,
-                "message": "Startup and health traces flushed to Langfuse",
-            },
-            indent=2,
+        tracer = get_tracer()
+        if isinstance(tracer, LangfuseTracer):
+            tracer.flush()
+
+        print(
+            json.dumps(
+                {
+                    "backend": tracer.backend_name,
+                    "message": "Startup and health traces flushed to Langfuse",
+                },
+                indent=2,
+            )
         )
-    )
-    return 0
+        return 0
 
 
 if __name__ == "__main__":

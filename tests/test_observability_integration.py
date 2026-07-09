@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app.core.config import Settings, get_settings
 from app.main import create_app
 from app.observability.init import get_memory_tracer, setup_observability
-from app.observability.tracing import NoOpTracer
+from app.observability.tracing import NoOpTracer, span
 
 
 @pytest.fixture
@@ -77,7 +77,6 @@ def test_langfuse_backend_can_flush(monkeypatch: pytest.MonkeyPatch) -> None:
 
     tracer = setup_observability()
     assert tracer.backend_name == "langfuse"
-    with tracer.start_span("observability.verify") as span:
-        span.set_output({"status": "ok"})
-        span.end()
+    with span(tracer, "observability.verify") as active_span:
+        active_span.set_output({"status": "ok"})
     tracer.flush()

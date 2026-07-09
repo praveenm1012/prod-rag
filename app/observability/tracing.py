@@ -259,7 +259,6 @@ class LangfuseSpanContext(SpanContext):
         self._ended = True
         if status == "error":
             self._observation.update(level="ERROR")
-        self._observation.end()
         self._manager.__exit__(None, None, None)
         return None
 
